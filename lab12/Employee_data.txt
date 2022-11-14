@@ -1,0 +1,17 @@
+Role: SoftEng
+    Name: Jim Jones
+    Age: 10
+    Skills: C++, Python, Rust
+    Pos: 50.00, 67.0
+
+Role: Manager
+    Name: John Smith
+    Age: 20
+    StaffList: Bob Brown, Alice Green
+    Pos: 14.34567, 100.45675
+
+Role: Manager
+    Name: John Smith
+    Age: 10
+    StaffList: Bob Brown, Alice Green
+    Pos: 14.34567, 100.45675
