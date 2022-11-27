@@ -1,4 +1,3 @@
-
 use std::io::BufReader;
 use std::fs::File;
 use std::io::BufRead;
@@ -11,30 +10,9 @@ struct GPS{
     long:   f64,
 }
 
-
-
-fn read_file_line_by_line(filepath: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let file = File::open(filepath)?;
-    let reader = BufReader::new(file);
-    
-    let mut i = 0;
-    
-    let temp: String = "".to_string();
-
-    for line in reader.lines() {
-        
-        println!("line {}: {}", i, line?);
-        i += 1; 
-    }
-
-    println!("{:?}", temp);
-    Ok(())
-
-
-}
-
+// filter the contents in each line by removing contents after longitude values
 fn remove(start: usize, stop: usize, s: &str) -> String {
-    // start = 20, end = 49
+    // start = 20, stop = 49
     let mut rslt = "".to_string();
     for (i, c) in s.chars().enumerate() {
         if start > i || stop < i + 1 {
@@ -44,6 +22,7 @@ fn remove(start: usize, stop: usize, s: &str) -> String {
     rslt
 }
 
+// Find the mean of lat and long values
 fn mean(latt_v:Vec<f64>, long_v:Vec<f64>) -> (f64, f64){
     let mut totatl_latt = 0.0;
     
@@ -71,6 +50,7 @@ fn mean(latt_v:Vec<f64>, long_v:Vec<f64>) -> (f64, f64){
 
 }
 
+// Find the st.dev of lat and long values
 fn standard_deviation(latt_v:Vec<f64>, long_v:Vec<f64>, mean:(f64, f64)) -> (f64, f64){
 
     let (mean_lat, mean_long) = mean;
@@ -99,13 +79,14 @@ fn standard_deviation(latt_v:Vec<f64>, long_v:Vec<f64>, mean:(f64, f64)) -> (f64
     (SD_lat.sqrt(), SD_long.sqrt())
 }
 
-fn meters(st_dev_lat:f64, st_dev_long:f64) -> (f64, f64)
-{
+// Convert the st.dev values of lat and long into their respective meters
+fn meters(st_dev_lat:f64, st_dev_long:f64) -> (f64, f64){
     let meter_lat = st_dev_lat * (111139 as f64);
     let meter_long = st_dev_lat * (107963 as f64);
     (meter_lat, meter_long)
 }
 
+// Finding minimun values of latt and long values
 fn min(latt_v:Vec<f64>, long_v:Vec<f64>) -> (f64, f64){
     let mut min_latt = latt_v[0];
     let mut min_long = long_v[0];
@@ -128,6 +109,8 @@ fn min(latt_v:Vec<f64>, long_v:Vec<f64>) -> (f64, f64){
 
     (min_latt, min_long)
 }
+
+// Finding maximum values of latt and long values
 fn max(latt_v:Vec<f64>, long_v:Vec<f64>) -> (f64, f64){
     let mut max_latt = latt_v[0];
     let mut max_long = long_v[0];
@@ -151,8 +134,8 @@ fn max(latt_v:Vec<f64>, long_v:Vec<f64>) -> (f64, f64){
     (max_latt, max_long)
 }
 
-fn count_latt(v:Vec<f64>, min:f64, max:f64) -> (Vec<f64> , Vec<i32>)
-{
+// Finding occurences from minimum to maximum values in latt values
+fn count_latt(v:Vec<f64>, min:f64, max:f64) -> (Vec<f64> , Vec<i32>){
    
     let mut start = min - 0.000004;
     let stepsize = 0.00001; 
@@ -214,8 +197,8 @@ fn count_latt(v:Vec<f64>, min:f64, max:f64) -> (Vec<f64> , Vec<i32>)
     
 }
 
-fn count_long(v:Vec<f64>, min:f64, max:f64) -> (Vec<f64> , Vec<i32>)
-{
+// Finding occurences from minimum to maximum values in long values
+fn count_long(v:Vec<f64>, min:f64, max:f64) -> (Vec<f64> , Vec<i32>){
    
     let mut start = min - 0.000004;
     let stepsize = 0.00001; 
@@ -276,14 +259,33 @@ fn count_long(v:Vec<f64>, min:f64, max:f64) -> (Vec<f64> , Vec<i32>)
     (new_vec, count_v)
     
 }
-fn main() {
-    //read_file_line_by_line("GPSA.csv");
 
-    let mut file = File::open("GPSA.csv").expect("File not found");
+fn read_file(filepath: &str) -> String{
+    let mut file = File::open(filepath).expect("File not found");
     let mut data = String::new();
     file.read_to_string(&mut data).expect("Error while reading file");
 
-    //println!("{}", data);
+    data
+}
+
+fn write_file(filepath: &str, bins : Vec<f64>, frequency : Vec<i32>){
+    let mut f1 = File::create(filepath).expect("Unable to create file"); 
+
+    let mut i = 0;
+    let length = bins.len();
+
+    while i!= length - 1
+    {   
+        write!(f1, "{} {}\n", bins[i], frequency[i]);
+        i += 1
+    }
+    write!(f1, "{}", bins[length-1]);
+}
+
+fn main() {
+    //read_file_line_by_line("GPSA.csv");
+    let read_filepath = "GPSA.csv";
+    let mut data = read_file(read_filepath);
 
     let mut v = vec![];
     for line in data.lines()
@@ -299,7 +301,7 @@ fn main() {
             }
         );
     }
- 
+
     let mut lat = vec![];
     let mut long = vec![];
 
@@ -315,7 +317,6 @@ fn main() {
     // Lab 13
     let mut lat4 = vec![];
     let mut long4 = vec![];
-
 
     //__________________________
     for i in v
@@ -337,71 +338,36 @@ fn main() {
         long4.push(i.long);
 
     }
-    println!("{:?}", lat);
-    println!("{:?}", long);
 
-    
-    let mean = mean(lat, long); // lat and long vec gone after this
+    let mean = mean(lat, long);                 // lat and long vec gone after this
 
-    println!("mean = {:?}", mean);
-    // println!("{:?}", lat1);
-    // println!("{:?}", long1);
     let st_dev = standard_deviation(lat1, long1, mean);
+    let (st_dev_latt, st_dev_long) =  st_dev;   
 
-    println!("{:#?}", st_dev);
-    let (st_dev_latt, st_dev_long) =  st_dev;
-
-    //println!("{:?} {:?}", st_dev_latt, st_dev_long);
     let (meter_latt, meter_long) = meters(st_dev_latt, st_dev_long);
-    println!("Latt: {:?} meter, Long: {:?} meter", meter_latt, meter_long);
 
     let (min_latt, min_long) = min(lat2, long2);
     let (max_latt, max_long) = max(lat3, long3);
-
-    println!("Min latt: {:?}, Min long: {:?}", min_latt, min_long);
-    println!("Max latt: {:?}, Max long: {:?}", max_latt, max_long);
 
     let bin_size_latt = max_latt - min_latt;
     let bin_size_long = max_long - min_long;
 
     println!("bin_size_latt: {:?}, bin_size_long: {:?}", bin_size_latt, bin_size_long);
 
-
     // Lab 15 Date - November 22, 2022
-
     // Latt bins
-    let (bins, frequency) = count_latt(lat4, min_latt, max_latt);
 
+    let (bins, frequency) = count_latt(lat4, min_latt, max_latt);
     println!("{:?} \n{:?}", bins, frequency);
 
-    
-    let mut f1 = File::create("lat.csv").expect("Unable to create file"); 
-
-    let mut i = 0;
-    let length = bins.len();
-
-    while i!= length - 1
-    {   
-        write!(f1, "{} {}\n", bins[i], frequency[i]);
-        i += 1
-    }
-    write!(f1, "{}", bins[length-1]);
+    let write_latt_filepath = "lat.csv";
+    write_file(write_latt_filepath, bins, frequency);
 
     // longitude  bins
     let (bins, frequency) = count_long(long4, min_long, max_long);
-
     println!("{:?} \n{:?}", bins, frequency);
 
-    
-    let mut f1 = File::create("long.csv").expect("Unable to create file"); 
+    let write_long_filepath = "long.csv";
+    write_file(write_long_filepath, bins, frequency);
 
-    let mut i = 0;
-    let length = bins.len();
-
-    while i!= length - 1
-    {   
-        write!(f1, "{} {}\n", bins[i], frequency[i]);
-        i += 1
-    }
-    write!(f1, "{}", bins[length-1]);
 }
